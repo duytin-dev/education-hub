@@ -33,15 +33,16 @@ public class CategoryController {
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "id") String sortBy,
         @RequestParam(defaultValue = "asc") String direction,
-        @RequestParam(required = false) String keyword
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String description
     ) {
             Sort sort = direction.equalsIgnoreCase("desc")
                     ? Sort.by(sortBy).descending()
                     : Sort.by(sortBy).ascending();
-
+            // trang , bn item , sort theo giam dan , tang dan
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<CategoryResponse> result = categoryService.getAll(keyword, pageable);
+            Page<CategoryResponse> result = categoryService.getAll(keyword, description, pageable);
             return ResponseEntity.ok(ApiResponse.success(result));
     }
     @GetMapping("/{id}")

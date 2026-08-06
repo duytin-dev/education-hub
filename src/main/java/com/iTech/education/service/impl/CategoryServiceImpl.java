@@ -6,8 +6,11 @@ import com.iTech.education.entity.Category;
 import com.iTech.education.exception.ResourceNotFoundException;
 import com.iTech.education.repository.CategoryRepository;
 import com.iTech.education.service.CategoryService;
+import com.iTech.education.specification.CategorySpecificationImpl;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -69,16 +72,23 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<CategoryResponse> getAll(String keyword, Pageable pageable) {
-        Page<Category> categoryPage;
+    public Page<CategoryResponse> getAll(String keyword,String description, Pageable pageable) {
 
-        if (StringUtils.hasText(keyword)) {
-            categoryPage = categoryRepository.findByNameContainingIgnoreCase(keyword, pageable);
-        } else {
-            categoryPage = categoryRepository.findAll(pageable);
-        }
+
+        Specification<Category> spec = new CategorySpecificationImpl(keyword,description);
+        Page<Category> categoryPage = categoryRepository.findAll(spec, pageable);
+        List<CategoryResponse> categories = categoryPage.getContent().stream()
+                .map(category -> CategoryResponse.fromEntity(category))
+                .toList();
+
+
 
         // map Page<Category> -> Page<CategoryResponse>, giữ nguyên thông tin phân trang (total, pageNumber...)
-        return categoryPage.map(CategoryResponse::fromEntity);
+        return new PageImpl<>(
+                categories,
+                pageable,
+                categoryPage.getTotalElements()
+        );
+
     }
 }
