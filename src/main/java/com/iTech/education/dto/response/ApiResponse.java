@@ -38,4 +38,7 @@ public class ApiResponse<T> {
                 .data(null)
                 .build();
     }
+
+    public static class CourseResponse {
+    }
 }
