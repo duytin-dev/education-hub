@@ -70,6 +70,8 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+        // chọn role đầu
+
 
         return claims.get("roles", List.class);
     }
