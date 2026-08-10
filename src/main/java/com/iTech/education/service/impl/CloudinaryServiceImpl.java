@@ -27,6 +27,16 @@ public class CloudinaryServiceImpl implements CloudinaryService {
                 .toString();
 
     }
+    @Override
+    public String uploadVideo(MultipartFile file) throws IOException {
+        // resource_type: "video" bắt buộc phải khai báo rõ, khác mặc định "image" của uploadAvatar
+        Map result = cloudinary.uploader()
+                .upload(file.getBytes(), ObjectUtils.asMap(
+                        "folder", "lessons/videos",
+                        "resource_type", "video"
+                ));
+        return result.get("secure_url").toString();
+    }
 
 
 
