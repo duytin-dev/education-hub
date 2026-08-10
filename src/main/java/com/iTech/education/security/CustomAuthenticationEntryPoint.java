@@ -18,9 +18,13 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public CustomAuthenticationEntryPoint(ObjectMapper objectMapper){
         this.objectMapper = objectMapper;
     }
-    // lỗi :Chưa đăng nhập hoặc JWT không hợp lệ -> ném ra AuthenticationException -> gọi hàm commence() -> trả về lỗi 401
+    // lỗi :Chưa đăng nhập hoặc JWT không hợp lệ ->
+    // ném ra AuthenticationException -> gọi hàm commence()
+    // -> trả về lỗi 401
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         AuthenticationException authException) throws IOException, ServletException {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json;charset=UTF-8");
             ApiResponse<?> body = ApiResponse.error("Vui lòng đăng nhập để tiếp tục ");
