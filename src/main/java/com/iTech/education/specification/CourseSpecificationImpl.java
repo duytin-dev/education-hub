@@ -31,13 +31,18 @@ public class CourseSpecificationImpl  {
             Level level,
             BigDecimal minPrice,
             BigDecimal maxPrice,
-            CourseStatus status
+            CourseStatus status,
+            Long instructorId
     ) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (keyword != null && !keyword.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + keyword.toLowerCase() + "%"));
+            }
+
+            if (instructorId != null) {
+                predicates.add(cb.equal(root.get("instructor").get("id"), instructorId));
             }
 
             if (categoryId != null) {

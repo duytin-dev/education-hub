@@ -105,9 +105,19 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public Page<CourseResponse> search(String keyword, Long categoryId, Level level,
                                        BigDecimal minPrice, BigDecimal maxPrice,
-                                       CourseStatus status, Pageable pageable) {
+                                       CourseStatus status, Long instructorId,
+                                       String currentUserEmail, Pageable pageable) {
+        Long scopedInstructorId = instructorId;
+        if (currentUserEmail != null && !currentUserEmail.isBlank()
+                && !"anonymousUser".equals(currentUserEmail)) {
+            User currentUser = userService.handleGetUserByUsername(currentUserEmail);
+            if (currentUser.getRole() == RoleType.INSTRUCTOR) {
+                scopedInstructorId = currentUser.getId();
+            }
+        }
 
-        var spec = CourseSpecificationImpl.filter(keyword, categoryId, level, minPrice, maxPrice, status);
+        var spec = CourseSpecificationImpl.filter(
+                keyword, categoryId, level, minPrice, maxPrice, status, scopedInstructorId);
         Page<Course> coursePage = courseRepository.findAll(spec, pageable);
         return coursePage.map(CourseResponse::fromEntity);
     }

@@ -31,6 +31,7 @@ public class CourseController {
     /**
      * GET /api/v1/courses?keyword=spring&categoryId=1&level=BEGINNER&minPrice=100000&maxPrice=600000&page=0&size=10
      * Tất cả param đều optional. Public - ai cũng xem được, kể cả chưa login.
+     * INSTRUCTOR luôn chỉ nhận khóa của chính mình (lọc instructor_id trên DB).
      */
     @GetMapping
     public ResponseEntity<?> search(
@@ -40,21 +41,35 @@ public class CourseController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) CourseStatus status,
+            @RequestParam(required = false) Long instructorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction
+            @RequestParam(defaultValue = "desc") String direction,
+            Authentication authentication
     ) {
         Sort sort = direction.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
+        String email = emailOf(authentication);
 
         Page<CourseResponse> result = courseService.search(
-                keyword, categoryId, level, minPrice, maxPrice, status, pageable
+                keyword, categoryId, level, minPrice, maxPrice, status, instructorId, email, pageable
         );
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    private String emailOf(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        String name = authentication.getName();
+        if (name == null || name.isBlank() || "anonymousUser".equals(name)) {
+            return null;
+        }
+        return name;
     }
 
     @GetMapping("/{id}")

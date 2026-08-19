@@ -140,6 +140,19 @@ class CourseIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.data.content[0].title").value("Java Course"));
     }
 
+    @Test
+    void searchCourses_instructorShouldOnlySeeOwnCourses() throws Exception {
+        saveCourse("Mine Course", instructorEmail("instructor@test.com"));
+        saveCourse("Other Course", instructorEmail("other-instructor@test.com"));
+
+        mockMvc.perform(get("/api/v1/courses")
+                        .header("Authorization", instructorToken)
+                        .param("size", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].title").value("Mine Course"));
+    }
+
     private User saveUser(String email, RoleType role) {
         User user = new User();
         user.setEmail(email);

@@ -25,6 +25,8 @@ public interface CourseService {
             BigDecimal minPrice,
             BigDecimal maxPrice,
             CourseStatus status,
+            Long instructorId,
+            String currentUserEmail,
             Pageable pageable
     );
 
