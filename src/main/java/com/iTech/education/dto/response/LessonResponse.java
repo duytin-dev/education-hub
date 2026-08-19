@@ -23,18 +23,32 @@ public class LessonResponse {
     private Integer duration;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean locked;
 
     public static LessonResponse fromEntity(Lesson lesson) {
+        return fromEntity(lesson, false);
+    }
+
+    public static LessonResponse fromEntityPreview(Lesson lesson) {
+        return fromEntity(lesson, true);
+    }
+
+    private static LessonResponse fromEntity(Lesson lesson, boolean locked) {
         LessonResponse response = new LessonResponse();
         response.setId(lesson.getId());
         response.setCourseId(lesson.getCourse() != null ? lesson.getCourse().getId() : null);
         response.setTitle(lesson.getTitle());
-        response.setVideoUrl(lesson.getVideoUrl());
-        response.setContent(lesson.getContent());
         response.setOrderIndex(lesson.getOrderIndex());
         response.setDuration(lesson.getDuration());
         response.setCreatedAt(lesson.getCreatedAt());
         response.setUpdatedAt(lesson.getUpdatedAt());
+        response.setLocked(locked);
+
+        if (!locked) {
+            response.setVideoUrl(lesson.getVideoUrl());
+            response.setContent(lesson.getContent());
+        }
+
         return response;
     }
 }
