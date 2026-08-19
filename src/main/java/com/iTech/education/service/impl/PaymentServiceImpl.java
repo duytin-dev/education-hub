@@ -13,6 +13,7 @@ import com.iTech.education.repository.CourseRepository;
 import com.iTech.education.repository.TransactionRepository;
 import com.iTech.education.repository.UserRepository;
 import com.iTech.education.service.EnrollmentService;
+import com.iTech.education.service.MailService;
 import com.iTech.education.service.PaymentService;
 import com.iTech.education.utils.CourseStatus;
 import com.iTech.education.utils.RoleType;
@@ -41,19 +42,22 @@ public class PaymentServiceImpl implements PaymentService {
     private final EnrollmentService enrollmentService;
     private final PaymentProperties paymentProperties;
     private final VnPayUtils vnPayUtils;
+    private final MailService mailService;
 
     public PaymentServiceImpl(TransactionRepository transactionRepository,
                               CourseRepository courseRepository,
                               UserRepository userRepository,
                               EnrollmentService enrollmentService,
                               PaymentProperties paymentProperties,
-                              VnPayUtils vnPayUtils) {
+                              VnPayUtils vnPayUtils,
+                              MailService mailService) {
         this.transactionRepository = transactionRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.enrollmentService = enrollmentService;
         this.paymentProperties = paymentProperties;
         this.vnPayUtils = vnPayUtils;
+        this.mailService = mailService;
     }
 
     @Override
@@ -212,6 +216,29 @@ public class PaymentServiceImpl implements PaymentService {
             } catch (Exception ignored) {
                 // đã enroll rồi thì bỏ qua
             }
+        }
+
+        sendPaymentMail(transaction);
+    }
+
+    private void sendPaymentMail(Transaction transaction) {
+        try {
+            User buyer = transaction.getUser();
+            List<String> titles = transaction.getDetails().stream()
+                    .map(detail -> detail.getCourse().getTitle())
+                    .toList();
+            Long firstCourseId = transaction.getDetails().isEmpty()
+                    ? null
+                    : transaction.getDetails().get(0).getCourse().getId();
+            mailService.sendPaymentSuccess(
+                    buyer.getEmail(),
+                    buyer.getFullName(),
+                    titles,
+                    transaction.getTotalAmount(),
+                    firstCourseId
+            );
+        } catch (Exception ignored) {
+            // không chặn thanh toán nếu gửi mail lỗi
         }
     }
 

@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    @Query("SELECT t FROM Transaction t JOIN FETCH t.user LEFT JOIN FETCH t.details WHERE t.transactionCode = :code")
+    @Query("SELECT DISTINCT t FROM Transaction t JOIN FETCH t.user LEFT JOIN FETCH t.details d LEFT JOIN FETCH d.course WHERE t.transactionCode = :code")
     Optional<Transaction> findByTransactionCode(@Param("code") String code);
 
     long countByStatus(TransactionStatus status);
