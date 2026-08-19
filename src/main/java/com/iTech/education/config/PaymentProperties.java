@@ -20,7 +20,9 @@ public class PaymentProperties {
         private String tmnCode = "";
         private String hashSecret = "";
         private String payUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        private String returnUrl = "http://localhost:5173/payments/return";
+        /** Backend nhận redirect từ VNPay, xác nhận giao dịch, rồi chuyển về frontend. */
+        private String returnUrl = "http://localhost:8080/api/v1/payments/vnpay/return";
+        private String frontendReturnUrl = "http://localhost:3000/payments/return";
         private String ipnUrl = "http://localhost:8080/api/v1/payments/vnpay/ipn";
     }
 }

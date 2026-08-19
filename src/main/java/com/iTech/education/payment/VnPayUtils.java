@@ -17,35 +17,43 @@ import java.util.stream.Collectors;
 public class VnPayUtils {
 
     public String buildPaymentUrl(Map<String, String> params, PaymentProperties.VnPay vnPay) {
-        String hashData = buildHashData(params);
+        Map<String, String> data = filterPayable(params);
+        String hashData = buildHashData(data);
         String secureHash = hmacSHA512(vnPay.getHashSecret(), hashData);
-        String query = params.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(entry -> encode(entry.getKey()) + "=" + encode(entry.getValue()))
+        String query = data.keySet().stream()
+                .sorted()
+                .map(key -> encode(key) + "=" + encode(data.get(key)))
                 .collect(Collectors.joining("&"));
         return vnPay.getPayUrl() + "?" + query + "&vnp_SecureHash=" + secureHash;
     }
 
     public boolean validateSignature(Map<String, String> params, String hashSecret) {
         String receivedHash = params.get("vnp_SecureHash");
-        if (receivedHash == null) {
+        if (receivedHash == null || receivedHash.isBlank()) {
             return false;
         }
 
         Map<String, String> copy = params.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals("vnp_SecureHash"))
+                .filter(entry -> !"vnp_SecureHash".equals(entry.getKey()))
+                .filter(entry -> !"vnp_SecureHashType".equals(entry.getKey()))
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isBlank())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        String hashData = buildHashData(copy);
-        String calculated = hmacSHA512(hashSecret, hashData);
+        String calculated = hmacSHA512(hashSecret, buildHashData(copy));
         return calculated.equalsIgnoreCase(receivedHash);
+    }
+
+    private Map<String, String> filterPayable(Map<String, String> params) {
+        return params.entrySet().stream()
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isBlank())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private String buildHashData(Map<String, String> params) {
         List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
         return fieldNames.stream()
-                .map(name -> name + "=" + params.get(name))
+                .map(name -> name + "=" + encode(params.get(name)))
                 .collect(Collectors.joining("&"));
     }
 
@@ -66,6 +74,6 @@ public class VnPayUtils {
     }
 
     private String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        return URLEncoder.encode(value, StandardCharsets.US_ASCII);
     }
 }
