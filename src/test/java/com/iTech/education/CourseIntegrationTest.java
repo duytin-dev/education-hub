@@ -161,6 +161,7 @@ class CourseIntegrationTest extends IntegrationTestBase {
         user.setPhone("0123456789");
         user.setRole(role);
         user.setIsActive(true);
+        user.setEmailVerified(true);
         return userRepository.save(user);
     }
 

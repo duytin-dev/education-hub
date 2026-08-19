@@ -1,13 +1,20 @@
 package com.iTech.education;
 
+import com.iTech.education.entity.User;
+import com.iTech.education.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthIntegrationTest extends IntegrationTestBase {
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Test
     void register_shouldReturn201_whenRequestIsValid() throws Exception {
@@ -25,7 +32,8 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .content(requestJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.email").value("student@test.com"));
+                .andExpect(jsonPath("$.data.email").value("student@test.com"))
+                .andExpect(jsonPath("$.data.emailVerified").value(false));
     }
 
     @Test
@@ -67,6 +75,10 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .content(registerJson))
                 .andExpect(status().isCreated());
 
+        User user = userRepository.findByEmail("login@test.com").orElseThrow();
+        mockMvc.perform(get("/api/v1/verify-email").param("token", user.getVerificationToken()))
+                .andExpect(status().isFound());
+
         String loginJson = """
                 {
                   "email": "login@test.com",
@@ -80,6 +92,33 @@ class AuthIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
+    }
+
+    @Test
+    void login_shouldReturn403_whenEmailNotVerified() throws Exception {
+        String registerJson = """
+                {
+                  "email": "unverified@test.com",
+                  "password": "pass123",
+                  "fullName": "Unverified User",
+                  "phone": "0123456789"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerJson))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "unverified@test.com",
+                                  "password": "pass123"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -97,6 +136,10 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerJson))
                 .andExpect(status().isCreated());
+
+        User user = userRepository.findByEmail("wrongpass@test.com").orElseThrow();
+        mockMvc.perform(get("/api/v1/verify-email").param("token", user.getVerificationToken()))
+                .andExpect(status().isFound());
 
         String loginJson = """
                 {
