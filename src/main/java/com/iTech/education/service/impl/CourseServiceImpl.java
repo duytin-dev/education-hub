@@ -39,9 +39,6 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseResponse create(CourseRequest request, String currentUserEmail) {
         User instructor = userService.handleGetUserByUsername(currentUserEmail);
-        if (instructor == null) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng");
-        }
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -134,9 +131,6 @@ public class CourseServiceImpl implements CourseService {
      */
     private void checkOwnership(Course course, String currentUserEmail) {
         User currentUser = userService.handleGetUserByUsername(currentUserEmail);
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng");
-        }
 
         boolean isAdmin = currentUser.getRole() == RoleType.ADMIN;
         boolean isOwner = course.getInstructor().getId().equals(currentUser.getId());
