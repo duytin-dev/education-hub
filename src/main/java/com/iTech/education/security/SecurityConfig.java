@@ -62,6 +62,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/courses/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/lessons/**").permitAll()
+                        .requestMatchers("/api/v1/payments/vnpay/ipn").permitAll()
+                        .requestMatchers("/api/v1/enrollments/**").authenticated()
+                        .requestMatchers("/api/v1/payments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/comments").authenticated()
+                        .requestMatchers("/api/v1/comments/**").authenticated()
+                        .requestMatchers("/api/v1/users/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
