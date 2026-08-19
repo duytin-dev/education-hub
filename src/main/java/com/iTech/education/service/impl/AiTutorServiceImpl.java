@@ -143,7 +143,7 @@ public class AiTutorServiceImpl implements AiTutorService {
             InputStream stream = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
             String response = stream == null ? "" : new String(stream.readAllBytes(), StandardCharsets.UTF_8);
             if (status >= 400) {
-                throw new IllegalStateException("Dịch vụ AI " + path + " trả " + status + ": " + response);
+                throw new IllegalStateException(friendlyAiError(path, status, response));
             }
             if (response.isBlank()) {
                 return Map.of();
@@ -151,13 +151,57 @@ public class AiTutorServiceImpl implements AiTutorService {
             return objectMapper.readValue(response, new TypeReference<>() {});
         } catch (IllegalStateException ex) {
             throw ex;
+        } catch (java.net.SocketTimeoutException ex) {
+            throw new IllegalStateException("Gia sư AI đang phản hồi chậm. Vui lòng thử lại sau.", ex);
         } catch (Exception ex) {
-            throw new IllegalStateException("Không gọi được dịch vụ AI tại " + path + ": " + ex.getMessage(), ex);
+            String raw = ex.getMessage() == null ? "" : ex.getMessage();
+            throw new IllegalStateException(friendlyAiError(path, 0, raw), ex);
         } finally {
             if (conn != null) {
                 conn.disconnect();
             }
         }
+    }
+
+    private String friendlyAiError(String path, int status, String response) {
+        String raw = response == null ? "" : response;
+        String lower = raw.toLowerCase();
+        if (status == 429
+                || lower.contains("resource_exhausted")
+                || lower.contains("insufficient_quota")
+                || lower.contains("quota exceeded")
+                || lower.contains("exceeded your current quota")
+                || lower.contains("generate_content_free_tier")
+                || lower.contains("hết quota")) {
+            return "Bạn đã hết quota. Vui lòng thử lại sau.";
+        }
+        if (status == 503 || lower.contains("chưa cấu hình")) {
+            return raw.isBlank() ? "Dịch vụ AI chưa sẵn sàng." : extractDetail(raw);
+        }
+        String detail = extractDetail(raw);
+        if (!detail.isBlank() && detail.length() < 280 && !detail.contains("{")) {
+            return detail;
+        }
+        if (status > 0) {
+            return "Không gọi được dịch vụ AI. Vui lòng thử lại sau.";
+        }
+        return "Không gọi được dịch vụ AI tại " + path + ".";
+    }
+
+    private String extractDetail(String response) {
+        if (response == null || response.isBlank()) {
+            return "";
+        }
+        try {
+            var node = objectMapper.readTree(response);
+            var detail = node.get("detail");
+            if (detail != null && detail.isTextual()) {
+                return detail.asText();
+            }
+        } catch (Exception ignored) {
+            /* not JSON */
+        }
+        return response;
     }
 
     private record LessonContext(String courseTitle, String lessonTitle, String lessonContent, String level) {}
