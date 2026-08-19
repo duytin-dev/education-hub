@@ -23,6 +23,7 @@ public class UserResponse {
     private String phone;
     private String role;
     private Boolean isActive;
+    private Boolean emailVerified;
     private LocalDateTime createdAt;
 
     public static UserResponse fromEntity(User user) {
@@ -34,6 +35,7 @@ public class UserResponse {
                 user.getPhone(),
                 user.getRole().name(),
                 user.getIsActive(),
+                Boolean.TRUE.equals(user.getEmailVerified()),
                 user.getCreatedAt()
         );
     }

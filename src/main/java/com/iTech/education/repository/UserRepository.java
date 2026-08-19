@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Boolean existsByEmail(String email);
 
+    Optional<User> findByVerificationToken(String verificationToken);
+
     long countByRole(RoleType role);
 
     long countByIsActive(Boolean isActive);
