@@ -31,5 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment ###
+.env
+prod.env
+
 # Spring
 # =========================
