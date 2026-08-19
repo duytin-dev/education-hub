@@ -124,9 +124,6 @@ public class LessonServiceImpl implements LessonService {
      */
     private void checkOwnership(Course course, String currentUserEmail) {
         User currentUser = userService.handleGetUserByUsername(currentUserEmail);
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng");
-        }
 
         boolean isAdmin = currentUser.getRole() == RoleType.ADMIN;
         boolean isOwner = course.getInstructor().getId().equals(currentUser.getId());
